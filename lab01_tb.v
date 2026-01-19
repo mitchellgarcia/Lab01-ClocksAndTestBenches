@@ -1,11 +1,11 @@
 //=========================================================================
 // Name & Email must be EXACTLY as in Gradescope roster!
-// Name: 
-// Email: 
+// Name: Mitchell Garcia
+// Email: mgarc635@ucr.edu
 // 
-// Assignment name: 
-// Lab section: 
-// TA: 
+// Assignment name: Lab01 - Clocks and Test Benches
+// Lab section: 001
+// TA: Dr. Knight
 // 
 // I hereby certify that I have not received assistance on this assignment,
 // or used code, from ANY outside source other than the instruction team
