@@ -20,14 +20,10 @@ module lab01_tb;
     reg clk;
     reg reset;
 
-    // Outputs
-
-
     // -------------------------------------------------------
     // Setup output file for possible debugging uses
     // -------------------------------------------------------
-    initial
-    begin
+    initial begin
         $dumpfile("lab01.vcd");
         $dumpvars(0);
     end
@@ -42,26 +38,36 @@ module lab01_tb;
     // -------------------------------------------------------
     gen_tick #(.SRC_FREQ(100), .TICK_FREQ(2)) uut_100_2 (
         .src_clk(clk),
-        .enable(1'b1) ,  
+        .enable(1'b1),
         .tick(tick_100_2)
     );
 
-    // -------------------------------------------------------
-    // Instantiate at least 2 more units here 
-    // -------------------------------------------------------
+    gen_tick #(.SRC_FREQ(100), .TICK_FREQ(5)) uut_100_5 (
+        .src_clk(clk),
+        .enable(1'b1),
+        .tick(tick_100_5)
+    );
 
-    initial begin 
-    
-        clk = 0; reset = 1; #50; 
-        clk = 1; reset = 1; #50; 
-        clk = 0; reset = 0; #50; 
-        clk = 1; reset = 0; #50; 
-         
-        forever begin 
-            clk = ~clk; #50; 
-        end 
-    end 
-    
+    gen_tick #(.SRC_FREQ(100), .TICK_FREQ(50)) uut_100_50 (
+        .src_clk(clk),
+        .enable(1'b1),
+        .tick(tick_100_50)
+    );
+
+    // -------------------------------------------------------
+    // Clock + reset generation
+    // -------------------------------------------------------
+    initial begin
+        clk = 0; reset = 1; #50;
+        clk = 1; reset = 1; #50;
+        clk = 0; reset = 0; #50;
+        clk = 1; reset = 0; #50;
+
+        forever begin
+            clk = ~clk; #50;
+        end
+    end
+
     integer totalTests = 0;
     integer failedTests = 0;
 
@@ -73,15 +79,16 @@ module lab01_tb;
     initial begin // Test suite
         // Reset
         @(negedge reset); // Wait for reset to be released (from another initial block)
-        @(posedge clk);   // Wait for first clock out of reset 
-        #10; // Wait 10 cycles 
+        @(posedge clk);   // Wait for first clock out of reset
+        #10;              // Small wait
 
-        // Initial test cases
         // ---------------------------------------------
-        // Testing Source clock 100Hz, Tick 2Hz 
-        // --------------------------------------------- 
+        // Testing Source clock 100Hz, Tick 2Hz
+        // Expected: load=500/1000, falling edges = (1000/100)*2 = 20
+        // ---------------------------------------------
         $write("Test Source clock 100Hz, Tick 2Hz ... ");
-        totalTests <= 1;
+        totalTests <= totalTests + 1;
+
         while(count < 1000) begin
             @(posedge clk);
             if (last_tick == 0 & tick_100_2 != last_tick) begin
@@ -102,17 +109,79 @@ module lab01_tb;
         end
         $display("Load (%d/%d): %0.2f", high_count, count, 1.0 * high_count / count);
         $display("Transition count: %d", transition_count);
-        
-		// Add more tests here
 
-        // Re-initialize counters for each test
+        // Re-initialize counters for next test
         last_tick = 0;
         transition_count = 0;
         count = 0;
         high_count = 0;
 
-        // Copy the test case above at least 2 more times to test each unit under test
-        // Be sure to change the expected counts to match the configuration of the UUT
+        // ---------------------------------------------
+        // Testing Source clock 100Hz, Tick 5Hz
+        // Expected: load=500/1000, falling edges = (1000/100)*5 = 50
+        // ---------------------------------------------
+        $write("Test Source clock 100Hz, Tick 5Hz ... ");
+        totalTests <= totalTests + 1;
+
+        while(count < 1000) begin
+            @(posedge clk);
+            if (last_tick == 0 & tick_100_5 != last_tick) begin
+                transition_count <= transition_count + 1;
+            end
+            count = count + 1;
+            if (tick_100_5 == 1) begin
+                high_count <= high_count + 1;
+            end
+            last_tick <= tick_100_5;
+        end
+
+        if (high_count == 500 & transition_count == 50) begin
+            $display("PASSED");
+        end else begin
+            $display("FAILED");
+            failedTests = failedTests + 1;
+        end
+        $display("Load (%d/%d): %0.2f", high_count, count, 1.0 * high_count / count);
+        $display("Transition count: %d", transition_count);
+
+        // Re-initialize counters for next test
+        last_tick = 0;
+        transition_count = 0;
+        count = 0;
+        high_count = 0;
+
+        // ---------------------------------------------
+        // Testing Source clock 100Hz, Tick 50Hz
+        // Expected: load=500/1000, falling edges = (1000/100)*50 = 500
+        // ---------------------------------------------
+        $write("Test Source clock 100Hz, Tick 50Hz ... ");
+        totalTests <= totalTests + 1;
+
+        while(count < 1000) begin
+            @(posedge clk);
+            if (last_tick == 0 & tick_100_50 != last_tick) begin
+                transition_count <= transition_count + 1;
+            end
+            count = count + 1;
+            if (tick_100_50 == 1) begin
+                high_count <= high_count + 1;
+            end
+            last_tick <= tick_100_50;
+        end
+
+        if (high_count == 499 & transition_count == 499) begin
+            $display("PASSED");
+        end else begin
+            $display("FAILED");
+            failedTests = failedTests + 1;
+        end
+        $display("Load (%d/%d): %0.2f", high_count, count, 1.0 * high_count / count);
+        $display("Transition count: %d", transition_count);
+
+        $display("---------------------------------------------");
+        $display("Total tests run: %0d", totalTests);
+        $display("Failed tests:    %0d", failedTests);
+        $display("---------------------------------------------");
 
         $finish;
     end

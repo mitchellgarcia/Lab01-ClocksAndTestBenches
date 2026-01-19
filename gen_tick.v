@@ -13,19 +13,34 @@
 //
 //=========================================================================
 
-module gen_tick # ( parameter SRC_FREQ = 5000, parameter TICK_FREQ = 1) (
-    input src_clk,
-    input enable,
+module gen_tick #(
+    parameter SRC_FREQ  = 5000,
+    parameter TICK_FREQ = 1
+)(
+    input  src_clk,
+    input  enable,
     output tick
 );
 
-// Declare registers and wires here
+    // Divider half-period in source-clock cycles minus 1
+    integer limit = SRC_FREQ / TICK_FREQ / 2 - 1;
 
-always @(posedge src_clk) begin
-    // put your code for the multiplier here
-end
+    integer accumulator = 0;
+    reg tick_out = 0;
 
-// Change this assign statement to the actual tick value
-assign tick = src_clk;
+    always @(posedge src_clk) begin
+        if (enable) begin
+            accumulator <= accumulator + 1;
+            if (accumulator >= limit) begin
+                tick_out <= ~tick_out;
+                accumulator <= 0;
+            end
+        end else begin
+            tick_out <= 0;
+            accumulator <= 0;
+        end
+    end
+
+    assign tick = tick_out;
 
 endmodule
